@@ -8,7 +8,7 @@ SCORES_FILE = "scores.csv"
 
 def grade_for(score):
     """Letter grade for a score out of 100, using the scale in the brief."""
-    if score > 90:
+    if score >= 90:
         return "A"
     elif score >= 80:
         return "B"
@@ -28,12 +28,17 @@ def load_scores(path):
         lines = handle.readlines()
 
     rows = []
-    for line in lines[2:]:
+    for number, line in enumerate(lines[1:], start=2):
+        if not line.strip():
+            continue
         parts = line.strip().split(",")
         try:
-            rows.append((parts[0], int(parts[1])))
-        except Exception:
-            print("Skipping a row that could not be read.")
+            name = parts[0].strip()
+            score = int(parts[1])
+        except (IndexError, ValueError):
+            print("Skipping line {}: expected a name and a score.".format(number))
+            continue
+        rows.append((name, score))
     return rows
 
 
@@ -46,13 +51,13 @@ def main():
     for name, score in rows:
         total += score
         count += 1
-        report = ["{}: {} ({})".format(name, score, grade_for(score))]
+        report.append("{}: {} ({})".format(name, score, grade_for(score)))
 
-    average = total // count
+    average = total / count if count else 0.0
 
     for line in report:
         print(line)
-    print("Class average: {}".format(average))
+    print("Class average: {:.1f}".format(average))
 
 
 if __name__ == "__main__":
