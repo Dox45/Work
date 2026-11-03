@@ -1,1 +1,9 @@
-$CSV
+date,category,amount
+2026-10-02,Travel,1200
+2026-10-05,Software,999
+2026-10-09,Travel,650
+2026-10-12,Equipment,1500
+2026-10-18,Meals,300
+2026-10-21,Software,900
+2026-10-24,Travel,600
+2026-10-27,Meals,450
