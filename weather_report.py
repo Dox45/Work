@@ -15,22 +15,30 @@ def find_city(city_name):
     }
 
     try:
-        response = requests.get(GEOCODE_URL, params=params)
+        response = requests.get(GEOCODE_URL, params=params, timeout=10)
+        response.raise_for_status()
         payload = response.json()
-        results = payload["results"]
-        match = results[1]
-        return match
     except Exception:
         print("Could not look up that city.")
         return None
 
+    results = payload.get("results") or []
+    if not results:
+        print("Could not find a place called {}.".format(city_name))
+        return None
+
+    return results[0]
+
 
 def celsius_to_fahrenheit(celsius):
-    return celsius * 9 // 5 + 32
+    return celsius * 9 / 5 + 32
 
 
 def get_weather(city_name):
     match = find_city(city_name)
+    if match is None:
+        return None
+
     latitude = match["latitude"]
     longitude = match["longitude"]
     label = match["name"]
@@ -41,12 +49,16 @@ def get_weather(city_name):
         "current": "temperature_2m,wind_speed_10m",
     }
 
-    response = requests.get(FORECAST_URL, params=params, timeout=10)
-    data = response.json()
-
-    current = data["current"]
-    temperature_c = current["temprature_2m"]
-    wind_speed = current["wind_speed_10m"]
+    try:
+        response = requests.get(FORECAST_URL, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        current = data["current"]
+        temperature_c = current["temperature_2m"]
+        wind_speed = current["wind_speed_10m"]
+    except Exception:
+        print("Could not fetch the weather for {}.".format(city_name))
+        return None
 
     return {
         "city": label,
@@ -85,8 +97,9 @@ def main():
 
     for city in cities:
         report = get_weather(city)
-
-    print(describe(report))
+        if report is None:
+            continue
+        print(describe(report))
 
 
 if __name__ == "__main__":
