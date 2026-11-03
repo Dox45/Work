@@ -17,7 +17,9 @@ This repo is a small sandbox. It exists so I can check that commits and pull req
 ```
 Work/
 ├── README.md
-└── (more files coming)
+├── EXERCISE.md
+├── weather_report.py
+└── requirements.txt
 ```
 
 ## Status
@@ -27,6 +29,18 @@ Work/
 | Setup | Done |
 | First commit | Done |
 | Content | In progress |
+
+## Debugging exercise
+
+`weather_report.py` is a small weather report script. It is broken on purpose.
+`EXERCISE.md` describes what it should do, the shape of the output, and what to
+fix. Good practice for debugging: read the code, run it, then make it match the
+brief.
+
+```
+pip install -r requirements.txt
+python3 weather_report.py Lagos
+```
 
 ## Contributing
 
