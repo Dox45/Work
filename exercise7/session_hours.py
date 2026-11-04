@@ -1,9 +1,6 @@
 """Tutoring hours report.
 
 Reads sessions.csv and prints how many hours each tutor taught last week.
-
-THIS VERSION IS BROKEN ON PURPOSE. See SESSION_HOURS_EXERCISE.md for what it
-is supposed to print.
 """
 
 import csv
@@ -16,30 +13,33 @@ def load_rows(path):
         return list(csv.DictReader(handle))
 
 
+def to_minutes(stamp):
+    # "14:30" -> 870. Splitting on the colon copes with "9:00" as well.
+    parts = stamp.strip().split(":")
+    return int(parts[0]) * 60 + int(parts[1])
+
+
 def session_hours(row):
-    # Take the hour part of "14:30" and subtract.
-    start = int(row["start"][:2])
-    end = int(row["end"][:2])
-    return end - start
+    # Work in minutes so the odd quarters of an hour are kept.
+    return (to_minutes(row["end"]) - to_minutes(row["start"])) / 60
 
 
 def main():
     rows = load_rows(FILENAME)
 
-    # The first row is the column headings.
-    rows = rows[1:]
-
     per_tutor = {}
     sessions = {}
     completed = 0
-    all_hours = 0
+    all_hours = 0.0
+    longest = None
 
     for row in rows:
-        tutor = row["tutor"]
-
-        # No-shows do not count.
-        if row["status"] == "no-show":
+        # Only completed sessions count towards anything.
+        if row["status"] != "completed":
             continue
+
+        # A stray space in a name must not split one tutor into two.
+        tutor = row["tutor"].strip()
 
         completed = completed + 1
         length = session_hours(row)
@@ -47,32 +47,26 @@ def main():
         sessions[tutor] = sessions.get(tutor, 0) + 1
         all_hours = all_hours + length
 
+        if longest is None or length > longest[0]:
+            longest = (length, row["session_id"])
+
     print("Sessions logged: " + str(len(rows)))
     print(
         "Completed: " + str(completed) + " ("
-        + "{:.1f}".format(completed / len(per_tutor) * 100) + "%)"
+        + "{:.1f}".format(completed / len(rows) * 100) + "%)"
     )
 
-    # One line per tutor, in alphabetical order.
-    for tutor in sorted(per_tutor):
-        booked = 0
-        for row in rows:
-            if row["tutor"] == tutor:
-                booked = booked + 1
+    # One line per tutor, most hours first.
+    for tutor in sorted(per_tutor, key=lambda name: per_tutor[name], reverse=True):
         print(
             tutor + ": " + str(sessions[tutor]) + " sessions, "
             + "{:.1f}".format(per_tutor[tutor]) + " h, avg "
-            + "{:.1f}".format(per_tutor[tutor] / booked) + " h"
+            + "{:.1f}".format(per_tutor[tutor] / sessions[tutor]) + " h"
         )
 
-    # The longest session is the one that finished latest.
-    latest = rows[0]
-    for row in rows:
-        if row["end"] > latest["end"]:
-            latest = row
     print(
-        "Longest session: " + latest["session_id"] + " "
-        + "{:.1f}".format(session_hours(latest)) + " h"
+        "Longest session: " + longest[1] + " "
+        + "{:.1f}".format(longest[0]) + " h"
     )
 
     print("Total hours: " + "{:.1f}".format(all_hours) + " h")
